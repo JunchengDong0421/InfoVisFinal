@@ -82,18 +82,17 @@ function OverviewTreeMap(props) {
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value))
             .sort((a, b) => b.value - a.value);
     const leaves = root.leaves();
-    const leavesCategories = leaves.filter(d => d.data.name);
-    const color = d3.scaleOrdinal(d3.schemeCategory10).domain(leavesCategories);
+    const color = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(leaves, d => d.value)]);
     const sameCell = NOC => selectedCountry === NOC;
     return <svg width={WIDTH} height={HEIGHT}>
         <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
-            {root.leaves().map((d, idx) => {
+            {leaves.map((d, idx) => {
                 const nameOfCountry = d.data.name;
                 return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}
                     onMouseOver={()=>{setSelectedCountry(nameOfCountry)}} onMouseOut={()=>{setSelectedCountry(null)}}>
                     <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={sameCell(nameOfCountry) ? 'black': 'none'}
                           strokeWidth={sameCell(nameOfCountry) ? '4px': '0'}
-                          fill={color(nameOfCountry)} opacity={0.8}/>
+                          fill={color(d.data.value)} opacity={0.8}/>
                     <TreeMapText d={d}/>
                 </g>
             })}
