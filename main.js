@@ -90,22 +90,22 @@ function OverviewTreeMap(props) {
         alignItems: 'center'
     }
     return <div style={mapLayout}>
-            <svg width={WIDTH} height={HEIGHT}>
-                <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
-                    {leaves.map((d, idx) => {
-                        const nameOfCountry = d.data.name;
-                        return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}
-                            onMouseOver={()=>{setSelectedCountry(nameOfCountry)}} onMouseOut={()=>{setSelectedCountry(null)}}>
-                            <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={sameCell(nameOfCountry) ? 'black': 'none'}
-                                  strokeWidth={sameCell(nameOfCountry) ? '4px': '0'}
-                                  fill={color(d.data.value)} opacity={0.8}/>
-                            <TreeMapText d={d}/>
-                        </g>
-                    })}
-                </g>
-            </svg>
-            <OverviewLegend width={legendWidth} height={legendHeight} tree={tree} color={color} />
-        </div>;
+        <svg width={WIDTH} height={HEIGHT}>
+            <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
+                {leaves.map((d, idx) => {
+                    const nameOfCountry = d.data.name;
+                    return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}
+                        onMouseOver={()=>{setSelectedCountry(nameOfCountry)}} onMouseOut={()=>{setSelectedCountry(null)}}>
+                        <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={sameCell(nameOfCountry) ? 'black': 'none'}
+                              strokeWidth={sameCell(nameOfCountry) ? '4px': '0'}
+                              fill={color(d.data.value)} opacity={0.8}/>
+                        <TreeMapText d={d}/>
+                    </g>
+                })}
+            </g>
+        </svg>
+        <OverviewLegend width={legendWidth} height={legendHeight} tree={tree} color={color} />
+    </div>;
 }
 
 function OverviewLegend(props) {
