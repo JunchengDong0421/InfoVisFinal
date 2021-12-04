@@ -78,6 +78,8 @@ function OverviewTreeMap(props) {
     const {tree, color, selectedCountry, setSelectedCountry} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
+    const legendWidth = 400; // make sure do not overflow x-axis of screen
+    const legendHeight = 35; // DO NOT change, otherwise not legend may not align in center
     const root = d3.treemap().tile(d3.treemapBinary).size([innerWidth, innerHeight]).padding(2)
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value))
             .sort((a, b) => b.value - a.value);
@@ -102,7 +104,7 @@ function OverviewTreeMap(props) {
                     })}
                 </g>
             </svg>
-            <OverviewLegend width={400} height={35} tree={tree} color={color} />
+            <OverviewLegend width={legendWidth} height={legendHeight} tree={tree} color={color} />
         </div>;
 }
 
