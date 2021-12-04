@@ -83,46 +83,53 @@ function OverviewTreeMap(props) {
             .sort((a, b) => b.value - a.value);
     const leaves = root.leaves();
     const sameCell = NOC => selectedCountry === NOC;
-    return <svg width={WIDTH} height={HEIGHT}>
-        <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
-            {leaves.map((d, idx) => {
-                const nameOfCountry = d.data.name;
-                return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}
-                    onMouseOver={()=>{setSelectedCountry(nameOfCountry)}} onMouseOut={()=>{setSelectedCountry(null)}}>
-                    <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={sameCell(nameOfCountry) ? 'black': 'none'}
-                          strokeWidth={sameCell(nameOfCountry) ? '4px': '0'}
-                          fill={color(d.data.value)} opacity={0.8}/>
-                    <TreeMapText d={d}/>
+    const mapLayout = {
+        display: 'flex',
+        alignItems: 'center'
+    }
+    return <div style={mapLayout}>
+            <svg width={WIDTH} height={HEIGHT}>
+                <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
+                    {leaves.map((d, idx) => {
+                        const nameOfCountry = d.data.name;
+                        return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}
+                            onMouseOver={()=>{setSelectedCountry(nameOfCountry)}} onMouseOut={()=>{setSelectedCountry(null)}}>
+                            <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={sameCell(nameOfCountry) ? 'black': 'none'}
+                                  strokeWidth={sameCell(nameOfCountry) ? '4px': '0'}
+                                  fill={color(d.data.value)} opacity={0.8}/>
+                            <TreeMapText d={d}/>
+                        </g>
+                    })}
                 </g>
-            })}
-        </g>
-    </svg>;
+            </svg>
+            <OverviewLegend width={400} height={35} tree={tree} color={color} />
+        </div>;
 }
 
 function OverviewLegend(props) {
     const {width, height, tree, color} = props;
-    let maxValue = d3.max(tree.children, d => d.value);
+    const innerWidth = width - MARGIN.left - MARGIN.right
+    const maxValue = d3.max(tree.children, d => d.value);
     let colors = [];
     for (let i = 0; i <= maxValue; ++i) {
       colors.push(color(i));
     }
     const ticks = color.ticks(6);
-    const innerWidth = width - MARGIN.left - MARGIN.right
     return <svg width={width} height={height}>
         <defs>
             <linearGradient id={`legend-${tree.type}`} x1={"0%"} y1={"0%"} x2={"100%"} y2={"0%"}>
                 {colors.map((d, idx) => {
-                    return <stop key={idx} offset={idx/maxValue} style={{stopColor:d, stopOpacity:1}} />
+                    return <stop key={idx} offset={idx/maxValue} style={{stopColor:d, stopOpacity:0.8}} />
                 })}
             </linearGradient>
         </defs>
         <g transform={`translate(${MARGIN.left}, 0)`}>
             <rect width={innerWidth} height={10} fill={`url(#legend-${tree.type})`} />
             {ticks.map(t => {
-                let p = t / maxValue * innerWidth;
+                let xPosition = t / maxValue * innerWidth;
                 return <g key={t}>
-                    <line x1={p} x2={p} y1={0} y2={17} stroke={`black`} />
-                    <text style={{textAnchor:'middle', fontSize:'12px'}} x={p} y={32}>
+                    <line x1={xPosition} x2={xPosition} y1={0} y2={17} stroke={`black`} />
+                    <text style={{textAnchor:'middle', fontSize:'12px'}} x={xPosition} y={32}>
                         {t}
                     </text>
                 </g>
@@ -132,7 +139,7 @@ function OverviewLegend(props) {
 }
 
 function DetailTreeMap(props) {
-    const {tree} = props;
+    const {tree, color} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     if (!tree.children) {
@@ -144,17 +151,12 @@ function DetailTreeMap(props) {
     const root = d3.treemap().tile(d3.treemapBinary).size([innerWidth, innerHeight]).padding(2)
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value));
     const leaves = root.leaves();
-    const leavesCategories = leaves.filter(d => d.data.name);  // d.data.name is the type of medal/discipline
-    const athleteColor = d3.scaleOrdinal(d3.schemePaired).domain(leavesCategories);
-    const colorList = tree.type === 'athlete' ? leaves.map(d => athleteColor(d.data.name)) :
-        ['gold', 'silver', '#CD7F32'];
-    const color = idx => colorList[idx];
     return <svg width={WIDTH} height={HEIGHT}>
         <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
             {leaves.map((d, idx) => {
                 return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}>
                     <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={'none'}
-                          fill={color(idx)} opacity={0.8}/>
+                          fill={color(d.data.name)} opacity={0.8}/>
                     <TreeMapText d={d}/>
                 </g>
             })}
@@ -233,16 +235,14 @@ const TokyoOlympics = () => {
         return <pre>loading...</pre>;
     }
     const countryList = Array.from(new Set(aData.map(d => d.NOC))).sort((a, b) => a.localeCompare(b));
+    const disciplineList = Array.from(new Set(aData.map(d => d.Discipline))).sort((a, b) => a.localeCompare(b));
     let mTreeJson = !detailCountry ? getOverviewTree(mData).slice(0, mMaxDisplay) :
         getDetailTree(mData.filter(d => d.NOC === detailCountry));  // sorted by number of medals
     let aTreeJson = !detailCountry ? getOverviewTree(aData).slice(0, aMaxDisplay) :
         getDetailTree(aData.filter(d => d.NOC === detailCountry));  // sorted by number of athletes
     let mTree = {name: 'root', children: mTreeJson, type: 'medal'};
     let aTree = {name: 'root', children: aTreeJson, type: 'athlete'};
-    const mapLayout = {
-        display: 'flex',
-        alignItems: 'center'
-    }
+
     if (!detailCountry) {
         const mColor = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(mTreeJson, d => d.value)]);
         const aColor = d3.scaleSequential(d3.interpolateGreens).domain([0, d3.max(aTreeJson, d => d.value)]);
@@ -251,31 +251,32 @@ const TokyoOlympics = () => {
             {/*Medal Tree Map*/}
             <TreeMapTitle text={'Number of Medals by Country'} />
             <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
-            <div style={mapLayout}>
-                <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
+            <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
                                  setSelectedCountry={setSelectedCountry}/>
-                <OverviewLegend width={400} height={35} tree={mTree} color={mColor} />
-            </div>
             {/*Athlete Tree Map*/}
             <TreeMapTitle text={'Number of Athletes by Country'} />
             <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
-            <div style={mapLayout}>
-                <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
+            <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
                                  setSelectedCountry={setSelectedCountry}/>
-                <OverviewLegend width={400} height={35} tree={aTree} color={aColor} />
-            </div>
         </div>;
     } else {
+        const mColor = d3.scaleOrdinal(['gold', 'silver', '#CD7F32']).domain(['Gold', 'Silver', 'Bronze']);
+        const aColor = d3.scaleOrdinal(['#606f15', '#e9700a', '#977ab4', '#a54509', '#9e8c62', '#3cc4d9', '#d9bf01',
+            '#fdc4bd', '#92a6fe', '#c9080a', '#78579e', '#81ffad', '#4ed1a5', '#d08f5d', '#1da49c', '#c203c8',
+            '#94bc19', '#6e83c8', '#bbd9fd', '#888593', '#699ab3', '#f097c6', '#d24dfe', '#1cae05', '#e9700a',
+            '#d3fe14', '#bb73a9', '#ccf6e9', '#10b0ff', '#b6a7d4', '#d3fe14', '#c9080a', '#d3fe14', '#fd9b39',
+            '#606f15', '#a54509', '#fc8772', '#f097c6', '#d4ccd1', '#606f15', '#739400', '#7d5bf0', '#bbd9fd',
+            '#73616f', '#297192', '#3957ff']).domain(disciplineList);
         return <div>
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
             <CountryDropdown options={countryList} selectedValue={detailCountry}
                              onSelectedValueChange={setDetailCountry} />
             {/*Medal Tree Map*/}
             <TreeMapTitle text={`Total Medals: ${!mTreeJson ? 0 : d3.sum(mTreeJson, d => d.value)}`} />
-            <DetailTreeMap tree={mTree} />
+            <DetailTreeMap tree={mTree} color={mColor} />
             {/*Athlete Tree Map*/}
             <TreeMapTitle text={`Total Athletes: ${d3.sum(aTreeJson, d => d.value)}`} />
-            <DetailTreeMap tree={aTree} />
+            <DetailTreeMap tree={aTree} color={aColor} />
         </div>;
     }
 }
