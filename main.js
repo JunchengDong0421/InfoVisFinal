@@ -75,14 +75,15 @@ function TreeMapText(props) {
 }
 
 function OverviewTreeMap(props) {
-    const {tree, colorScheme, selectedCountry, setSelectedCountry} = props;
+    const {tree, colorScheme, tickInterval, selectedCountry, setSelectedCountry} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     const root = d3.treemap().tile(d3.treemapBinary).size([innerWidth, innerHeight]).padding(2)
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value))
             .sort((a, b) => b.value - a.value);
     const leaves = root.leaves();
-    const color = d3.scaleSequential(colorScheme).domain([0, d3.max(leaves, d => d.value)]);
+    const maxValue = Math.ceil(d3.max(leaves, d => d.value) / tickInterval) * tickInterval;  // max value for legend
+    const color = d3.scaleSequential(colorScheme).domain([0, maxValue]);
     const sameCell = NOC => selectedCountry === NOC;
     return <svg width={WIDTH} height={HEIGHT}>
         <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
@@ -213,12 +214,12 @@ const TokyoOlympics = () => {
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
             <TreeMapTitle text={'Number of Medals by Country'} />
             <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
-            <OverviewTreeMap tree={mTree} colorScheme={d3.interpolateBlues} selectedCountry={selectedCountry}
-                             setSelectedCountry={setSelectedCountry}/>
+            <OverviewTreeMap tree={mTree} colorScheme={d3.interpolateBlues} tickInterval={20}
+                             selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry}/>
             <TreeMapTitle text={'Number of Athletes by Country'} />
             <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
-            <OverviewTreeMap tree={aTree} colorScheme={d3.interpolateGreens} selectedCountry={selectedCountry}
-                             setSelectedCountry={setSelectedCountry}/>
+            <OverviewTreeMap tree={aTree} colorScheme={d3.interpolateGreens} tickInterval={100}
+                             selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry}/>
         </div>;
     } else {
         return <div>
