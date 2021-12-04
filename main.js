@@ -75,15 +75,13 @@ function TreeMapText(props) {
 }
 
 function OverviewTreeMap(props) {
-    const {tree, colorScheme, tickInterval, selectedCountry, setSelectedCountry} = props;
+    const {tree, color, selectedCountry, setSelectedCountry} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     const root = d3.treemap().tile(d3.treemapBinary).size([innerWidth, innerHeight]).padding(2)
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value))
             .sort((a, b) => b.value - a.value);
     const leaves = root.leaves();
-    const maxValue = Math.ceil(d3.max(leaves, d => d.value) / tickInterval) * tickInterval;  // max value for legend
-    const color = d3.scaleSequential(colorScheme).domain([0, maxValue]);
     const sameCell = NOC => selectedCountry === NOC;
     return <svg width={WIDTH} height={HEIGHT}>
         <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
@@ -204,22 +202,25 @@ const TokyoOlympics = () => {
     }
     const countryList = Array.from(new Set(aData.map(d => d.NOC))).sort((a, b) => a.localeCompare(b));
     let mTreeJson = !detailCountry ? getOverviewTree(mData).slice(0, mMaxDisplay) :
-        getDetailTree(mData.filter(d => d.NOC === detailCountry));
+        getDetailTree(mData.filter(d => d.NOC === detailCountry));  // sorted by number of medals
     let aTreeJson = !detailCountry ? getOverviewTree(aData).slice(0, aMaxDisplay) :
-        getDetailTree(aData.filter(d => d.NOC === detailCountry));
+        getDetailTree(aData.filter(d => d.NOC === detailCountry));  // sorted by number of athletes
     let mTree = {name: 'root', children: mTreeJson, type: 'medal'};
     let aTree = {name: 'root', children: aTreeJson, type: 'athlete'};
+    const maxValue = (tree, interval) => Math.ceil(d3.max(tree, d => d.value) / interval) * interval;
+    const medalColor = d3.scaleSequential(d3.interpolateBlues).domain([0, maxValue(mTreeJson, 20)]);
+    const athleteColor = d3.scaleSequential(d3.interpolateGreens).domain([0, maxValue(aTreeJson, 100)]);
     if (!detailCountry) {
         return <div>
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
             <TreeMapTitle text={'Number of Medals by Country'} />
             <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
-            <OverviewTreeMap tree={mTree} colorScheme={d3.interpolateBlues} tickInterval={20}
-                             selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry}/>
+            <OverviewTreeMap tree={mTree} color={medalColor} selectedCountry={selectedCountry}
+                             setSelectedCountry={setSelectedCountry}/>
             <TreeMapTitle text={'Number of Athletes by Country'} />
             <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
-            <OverviewTreeMap tree={aTree} colorScheme={d3.interpolateGreens} tickInterval={100}
-                             selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry}/>
+            <OverviewTreeMap tree={aTree} color={athleteColor} selectedCountry={selectedCountry}
+                             setSelectedCountry={setSelectedCountry}/>
         </div>;
     } else {
         return <div>
