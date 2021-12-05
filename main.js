@@ -280,7 +280,7 @@ function ViewSwitch(props) {
 
 const TokyoOlympics = () => {
     const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in maps
-    const [detailCountry, setDetailCountry] = React.useState('Denmark');  // default: overview
+    const [detailCountry, setDetailCountry] = React.useState(null);  // default: overview
     const [mMaxDisplay, setMMaxDisplay] = React.useState(30);  // default: Top30
     const [aMaxDisplay, setAMaxDisplay] = React.useState(50);  // default: Top50
     const mData = useData('data/Medals.csv');
