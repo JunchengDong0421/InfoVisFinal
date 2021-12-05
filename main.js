@@ -2,7 +2,7 @@ console.log('Authors: Juncheng, Mostafa')
 
 const WIDTH = 1000;
 const HEIGHT = 600;
-const MARGIN = {top: 20, right: 40, bottom: 50, left: 40};
+const MARGIN = {top: 20, right: 40, bottom: 40, left: 40};
 
 function useData(csvPath) {
     const [dataAll, setData] = React.useState(null);
@@ -41,14 +41,17 @@ function getOverviewTree(data) {
 
 function getDetailTree(data) {
     // detail treemap json data
+    let tree = [];
     if (data.length === 0) {  // medal tree with no record
-        return null;
+        return tree;
     }
     const singleData = data[0];
     if ("Gold" in data[0]) { // medal tree (with record)
-        return [{name: 'Gold', value: singleData.Gold},
-            {name: 'Silver', value: singleData.Silver},
-            {name: 'Bronze', value: singleData.Bronze}];
+        ['Gold', 'Silver', 'Bronze'].map(d => {
+            const val = singleData[d];
+            if (val !== 0) {tree.push({name: d, value: val})}
+        })
+        return tree;
     } else {  // athlete tree
         const groupedData = d3.groups(data, d => d.Discipline);
         return groupedData.map(d => {
@@ -144,7 +147,9 @@ function DetailTreeMap(props) {
     const {tree, color} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
-    if (!tree.children) {
+    const legendWidth = 600;  // make sure do not overflow x-axis of screen
+    const legendHeight = innerHeight-2*2;  // minus the padding of the tree map
+    if (tree.children.length === 0) {
         return <svg width={WIDTH} height={HEIGHT}>
             <text fontSize={'3em'} x={innerWidth/2-MARGIN.left-MARGIN.right}
                   y={innerHeight/2+MARGIN.top+MARGIN.bottom}>No Record</text>
@@ -153,17 +158,64 @@ function DetailTreeMap(props) {
     const root = d3.treemap().tile(d3.treemapBinary).size([innerWidth, innerHeight]).padding(2)
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value));
     const leaves = root.leaves();
-    return <svg width={WIDTH} height={HEIGHT}>
-        <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
-            {leaves.map((d, idx) => {
-                return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}>
-                    <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={'none'}
-                          fill={color(d.data.name)} opacity={0.8}/>
-                    <TreeMapText d={d}/>
+    const mapLayout = {
+        display: 'flex',
+        alignItems: 'center'
+    }
+    return <div style={mapLayout}>
+        <svg width={WIDTH} height={HEIGHT}>
+            <g transform={`translate(${MARGIN.left}, ${MARGIN.top})`}>
+                {leaves.map((d, idx) => {
+                    return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}>
+                        <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={'none'}
+                              fill={color(d.data.name)} opacity={0.8}/>
+                        <TreeMapText d={d}/>
+                    </g>
+                })}
+            </g>
+        </svg>
+        <DetailLegend width={legendWidth} height={legendHeight} tree={tree} color={color}/>
+    </div>;
+}
+
+function DetailLegend(props) {
+    const {width, height, tree, color} = props;
+    const flexStyle = {
+        width: width,
+        height: height,
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignContent: 'center',
+    }
+    const dynamicConfig = n => {
+        let padding, config;
+        if (n>=40) {padding = 0; config = {height: 18, r: 5, margin: '3px 0', fontSize: 11};}
+        else if (30<=n && n<40) {padding = 15; config = {height: 20, r: 7, margin: '3px 0', fontSize: 12};}
+        else if (20<=n && n<30) {padding = 30; config = {height: 25, r: 9, margin: '5px 0', fontSize: 13};}
+        else if (10<=n && n<20) {padding = 40; config = {height: 30, r: 10, margin: '5px 0', fontSize: 14};}
+        else {padding = 40; config = {height: 40, r: 11, margin: '6px 0', fontSize: 14};}
+        flexStyle.height -= padding;
+        return config;
+    };
+    const config = dynamicConfig(tree.children.length);
+    return <div style={flexStyle}>
+        {tree.children.map(d => {
+            let cx = config.r, cy = config.r, fontSize = config.fontSize;
+            return <svg key={d.name} width={width/2-MARGIN.right} height={config.height}
+                        transform={`translate(10, 0)`} style={{margin: config.margin}}>
+                <g>
+                    <circle fill={color(d.name)} r={config.r} cx={cx} cy={cy} />
+                    <text style={{textAnchor: 'start', fontSize: config.fontSize + 'px', fontFamily: 'Trebuchet MS'}}
+                          x={config.r+cx+10} y={cy+config.fontSize/2}>
+                        {d.name}
+                    </text>
                 </g>
-            })}
-        </g>
-    </svg>;
+            </svg>
+        })}
+    </div>
 }
 
 function TreeMapTitle(props) {  // mainly for styling
@@ -192,7 +244,7 @@ function DisplaySlider(props) {
 
 function CountryDropdown (props) {
     const {options, selectedValue, onSelectedValueChange} = props;
-    return <select defaultValue={selectedValue}
+    return <select title={'country'} defaultValue={selectedValue}
                    onChange={event => onSelectedValueChange(event.target.value)}>
         {options.map( d => {
             return <option key={d} value={d} >
@@ -228,7 +280,7 @@ function ViewSwitch(props) {
 
 const TokyoOlympics = () => {
     const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in maps
-    const [detailCountry, setDetailCountry] = React.useState(null);  // default: overview
+    const [detailCountry, setDetailCountry] = React.useState('Denmark');  // default: overview
     const [mMaxDisplay, setMMaxDisplay] = React.useState(30);  // default: Top30
     const [aMaxDisplay, setAMaxDisplay] = React.useState(50);  // default: Top50
     const mData = useData('data/Medals.csv');
