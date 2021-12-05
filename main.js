@@ -78,7 +78,7 @@ function TreeMapText(props) {
 }
 
 function OverviewTreeMap(props) {
-    const {tree, color, selectedCountry, setSelectedCountry} = props;
+    const {tree, color, selectedCountry, mouseOver, mouseOut} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     const legendWidth = 400; // make sure do not overflow x-axis of screen
@@ -98,7 +98,7 @@ function OverviewTreeMap(props) {
                 {leaves.map((d, idx) => {
                     const nameOfCountry = d.data.name;
                     return <g key={idx+"treemap"} transform={`translate(${d.x0}, ${d.y0})`}
-                        onMouseOver={()=>{setSelectedCountry(nameOfCountry)}} onMouseOut={()=>{setSelectedCountry(null)}}>
+                        onMouseOver={()=>{mouseOver(nameOfCountry)}} onMouseOut={mouseOut}>
                         <rect width={d.x1-d.x0} height={d.y1-d.y0} stroke={sameCell(nameOfCountry) ? 'black': 'none'}
                               strokeWidth={sameCell(nameOfCountry) ? '4px': '0'}
                               fill={color(d.data.value)} opacity={0.8}/>
@@ -296,7 +296,8 @@ const TokyoOlympics = () => {
         getDetailTree(aData.filter(d => d.NOC === detailCountry));  // sorted by number of athletes
     let mTree = {name: 'root', children: mTreeJson, type: 'medal'};
     let aTree = {name: 'root', children: aTreeJson, type: 'athlete'};
-
+    const mouseOver = n => {setSelectedCountry(n)};
+    const mouseOut = () => {setSelectedCountry(null)};
     if (!detailCountry) {
         const mColor = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(mTreeJson, d => d.value)]);
         const aColor = d3.scaleSequential(d3.interpolateGreens).domain([0, d3.max(aTreeJson, d => d.value)]);
@@ -306,12 +307,12 @@ const TokyoOlympics = () => {
             <TreeMapTitle text={'Number of Medals by Country'} />
             <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
             <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
-                                 setSelectedCountry={setSelectedCountry}/>
+                             mouseOver={mouseOver} mouseOut = {mouseOut}/>
             {/*Athlete Tree Map*/}
             <TreeMapTitle text={'Number of Athletes by Country'} />
             <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
             <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
-                                 setSelectedCountry={setSelectedCountry}/>
+                             mouseOver={mouseOver} mouseOut = {mouseOut}/>
         </div>;
     } else {
         const mColor = d3.scaleOrdinal(['gold', 'silver', '#CD7F32']).domain(['Gold', 'Silver', 'Bronze']);
