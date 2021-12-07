@@ -272,7 +272,10 @@ function DisplaySlider(props) {
 }
 
 function CountryDropdown (props) {
-    const {options, selectedValue, onSelectedValueChange} = props;
+    const {options, selectedValue, selectedCountry, onSelectedValueChange} = props;
+    if (selectedValue && selectedCountry) {  // when hover on world map, hide dropdown
+        return <input type="text" value={selectedValue} readOnly/>
+    }
     return <select title={'country'} defaultValue={selectedValue}
                    onChange={event => onSelectedValueChange(event.target.value)}>
         {options.map( d => {
@@ -420,7 +423,7 @@ const TokyoOlympics = () => {
             <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
             {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
-            <CountryDropdown options={countryList} selectedValue={detailCountry}
+            <CountryDropdown options={countryList} selectedValue={detailCountry} selectedCountry={selectedCountry}
                              onSelectedValueChange={setDetailCountry} />
             {/*Medal Tree Map*/}
             <TreeMapTitle text={`Total Medals: ${!mTreeJson ? 0 : d3.sum(mTreeJson, d => d.value)}`} />
