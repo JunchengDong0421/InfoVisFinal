@@ -386,7 +386,7 @@ function Tooltip(props) {
     return <div style={style}>
         {`${selectedCountry}\n\n` + `Number of medals: ${totalCount(mTree)}\n`+
         `(G: ${singleCount('Gold')}, S: ${singleCount('Silver')}, B: ${singleCount('Bronze')})\n` +
-        `Number of athletes: ${totalCount(aTree)}`}
+        `Number of athletes: ${totalCount(aTree)}\n` + `(in ${aTree.length} discipline(s))`}
     </div>
 }
 
