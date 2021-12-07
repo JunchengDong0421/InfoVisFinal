@@ -309,7 +309,7 @@ function ViewSwitch(props) {
 }
 
 function WorldMap(props) {
-    const {map, color, data, medal, selectedTeam, mouseOver, mouseOut} = props;
+    const {map, color, data, medal, selectedCountry, detailCountry, mouseOver, mouseOut} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     const projection = d3.geoEqualEarth().fitSize([innerWidth, innerHeight], map);
@@ -342,7 +342,7 @@ function WorldMap(props) {
                 name = alias || name;
                 return <path key={f.properties.name + "boundary"} className={"boundary"} d={path(f)}
                              fill={country?color(country[medal]):"grey"} onMouseOver={() => mouseOver(name)}
-                             stroke={name === selectedTeam?'black':'none'}
+                             stroke={name === (selectedCountry || detailCountry)?'black':'none'}
                              onMouseOut={() => mouseOut()}/>
             })}
         </g>
@@ -381,7 +381,6 @@ const TokyoOlympics = () => {
     const worldMouseOut =() => {setSelectedCountry(null); setDetailCountry(null)};
     const overviewMouseOver = n => {setSelectedCountry(n)};
     const overviewMouseOut = () => {setSelectedCountry(null)};
-    const dropdownChange = n => {setSelectedCountry(n); setDetailCountry(n)};
     const mapColor = d3.scaleLinear().domain([0, d3.max(mData, (d) => d[medalType])]).range(["beige", "red"]);
     const mapFilter = ["Total", "Gold", "Silver", "Bronze"];
     if (!detailCountry) {
@@ -389,8 +388,8 @@ const TokyoOlympics = () => {
         const aColor = d3.scaleSequential(d3.interpolateGreens).domain([0, d3.max(aTreeJson, d => d.value)]);
         return <div>
             {/*World Map*/}
-            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedTeam={selectedCountry}
-                      mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
+            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
+                      detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
             <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
             {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry} />
@@ -416,13 +415,13 @@ const TokyoOlympics = () => {
             '#73616f', '#297192', '#3957ff']).domain(disciplineList);
         return <div>
             {/*World Map*/}
-            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedTeam={selectedCountry}
-                      mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
+            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
+                      detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
             <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
             {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
             <CountryDropdown options={countryList} selectedValue={detailCountry}
-                             onSelectedValueChange={dropdownChange} />
+                             onSelectedValueChange={setDetailCountry} />
             {/*Medal Tree Map*/}
             <TreeMapTitle text={`Total Medals: ${!mTreeJson ? 0 : d3.sum(mTreeJson, d => d.value)}`} />
             <DetailTreeMap tree={mTree} color={mColor} />
