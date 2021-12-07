@@ -315,7 +315,7 @@ function WorldMap(props) {
     const projection = d3.geoEqualEarth().fitSize([innerWidth, innerHeight], map);
     const path = d3.geoPath(projection);
     const features = map.features;
-    const alias = {
+    const aliasMap = {
         'Taiwan': 'Chinese Taipei',
         'Czechia': 'Czech Republic',
         'Dominican Rep.': 'Dominican Republic',
@@ -333,14 +333,16 @@ function WorldMap(props) {
             <path className={"sphere"} d={path({type: "Sphere"})} fill="lightblue"/>
             {features.map(f => {
                 let name = f.properties.name;
+                let alias = null;
                 let country = data.filter(d => d.NOC === name)[0];
                 if (!country) {
-                    name = alias[name];
-                    country = data.filter(d => d.NOC === name)[0];
+                    alias = aliasMap[name];
+                    country = data.filter(d => d.NOC === alias)[0];
                 }
+                name = alias || name;
                 return <path key={f.properties.name + "boundary"} className={"boundary"} d={path(f)}
                              fill={country?color(country[medal]):"grey"} onMouseOver={() => mouseOver(name)}
-                             stroke={name && (name === selectedTeam)?'black':'none'}
+                             stroke={name === selectedTeam?'black':'none'}
                              onMouseOut={() => mouseOut()}/>
             })}
         </g>
@@ -369,7 +371,6 @@ const TokyoOlympics = () => {
         return <pre>loading...</pre>;
     }
     const countryList = Array.from(new Set(aData.map(d => d.NOC))).sort((a, b) => a.localeCompare(b));
-    const disciplineList = Array.from(new Set(aData.map(d => d.Discipline))).sort((a, b) => a.localeCompare(b));
     let mTreeJson = !detailCountry ? getOverviewTree(mData).slice(0, mMaxDisplay) :
         getDetailTree(mData.filter(d => d.NOC === detailCountry));  // sorted by number of medals
     let aTreeJson = !detailCountry ? getOverviewTree(aData).slice(0, aMaxDisplay) :
@@ -378,8 +379,9 @@ const TokyoOlympics = () => {
     let aTree = {name: 'root', children: aTreeJson, type: 'athlete'};
     const worldMouseOver = n => {setSelectedCountry(n); setDetailCountry(n)};
     const worldMouseOut =() => {setSelectedCountry(null); setDetailCountry(null)};
-    const mouseOver = n => {setSelectedCountry(n)};
-    const mouseOut = () => {setSelectedCountry(null)};
+    const overviewMouseOver = n => {setSelectedCountry(n)};
+    const overviewMouseOut = () => {setSelectedCountry(null)};
+    const dropdownChange = n => {setSelectedCountry(n); setDetailCountry(n)};
     const mapColor = d3.scaleLinear().domain([0, d3.max(mData, (d) => d[medalType])]).range(["beige", "red"]);
     const mapFilter = ["Total", "Gold", "Silver", "Bronze"];
     if (!detailCountry) {
@@ -396,15 +398,16 @@ const TokyoOlympics = () => {
             <TreeMapTitle text={'Number of Medals by Country'} />
             <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
             <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
-                             mouseOver={mouseOver} mouseOut = {mouseOut} />
+                             mouseOver={overviewMouseOver} mouseOut = {overviewMouseOut} />
             {/*Athlete Tree Map*/}
             <TreeMapTitle text={'Number of Athletes by Country'} />
             <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
             <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
-                             mouseOver={mouseOver} mouseOut = {mouseOut} />
+                             mouseOver={overviewMouseOver} mouseOut = {overviewMouseOut} />
         </div>;
     } else {
         const mColor = d3.scaleOrdinal(['gold', 'silver', '#CD7F32']).domain(['Gold', 'Silver', 'Bronze']);
+        const disciplineList = Array.from(new Set(aData.map(d => d.Discipline))).sort((a, b) => a.localeCompare(b));
         const aColor = d3.scaleOrdinal(['#606f15', '#e9700a', '#977ab4', '#a54509', '#9e8c62', '#3cc4d9', '#d9bf01',
             '#fdc4bd', '#92a6fe', '#c9080a', '#78579e', '#81ffad', '#4ed1a5', '#d08f5d', '#1da49c', '#c203c8',
             '#94bc19', '#6e83c8', '#bbd9fd', '#888593', '#699ab3', '#f097c6', '#d24dfe', '#1cae05', '#e9700a',
@@ -419,7 +422,7 @@ const TokyoOlympics = () => {
             {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
             <CountryDropdown options={countryList} selectedValue={detailCountry}
-                             onSelectedValueChange={setDetailCountry} />
+                             onSelectedValueChange={dropdownChange} />
             {/*Medal Tree Map*/}
             <TreeMapTitle text={`Total Medals: ${!mTreeJson ? 0 : d3.sum(mTreeJson, d => d.value)}`} />
             <DetailTreeMap tree={mTree} color={mColor} />
