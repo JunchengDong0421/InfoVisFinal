@@ -82,7 +82,7 @@ function OverviewTreeMap(props) {
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     const legendWidth = 400; // make sure do not overflow x-axis of screen
-    const legendHeight = 35; // DO NOT change, otherwise not legend may not align in center
+    const legendHeight = 60; // DO NOT change, otherwise not legend may not align in center
     const root = d3.treemap().tile(d3.treemapBinary).size([innerWidth, innerHeight]).padding(2)
             .round(true)(d3.hierarchy(tree).sum(d => d.children ? 0 : d.value))
             .sort((a, b) => b.value - a.value);
@@ -107,19 +107,28 @@ function OverviewTreeMap(props) {
                 })}
             </g>
         </svg>
-        <OverviewLegend width={legendWidth} height={legendHeight} tree={tree} color={color} />
+        <OverviewLegend width={legendWidth} height={legendHeight} tree={tree} color={color}
+                        selectedCountry={selectedCountry}/>
     </div>;
 }
 
 function OverviewLegend(props) {
-    const {width, height, tree, color} = props;
-    const innerWidth = width - MARGIN.left - MARGIN.right
+    const {width, height, tree, color, selectedCountry} = props;
+    const innerWidth = width - MARGIN.left - MARGIN.right;
+    const rectHeight = 10; // height of color legend bar
     const maxValue = d3.max(tree.children, d => d.value);
     let colors = [];
     for (let i = 0; i <= maxValue; ++i) {
       colors.push(color(i));
     }
     const ticks = color.ticks(6);
+    const xScale = x => x / maxValue * innerWidth;
+    const children = tree.children;
+    const countryItem = c => children.filter(d => d.name === c)[0] || {name: c, value: null};  // cursor only for highlighted country
+    const selectedValue = selectedCountry ? countryItem(selectedCountry).value : null;
+    const cursorPath = v => {
+        if (v) return `M ${xScale(v)-5} 15 L ${xScale(v)+5} 15 L ${xScale(v)} 23 Z`;
+    }
     return <svg width={width} height={height}>
         <defs>
             <linearGradient id={`legend-${tree.type}`} x1={"0%"} y1={"0%"} x2={"100%"} y2={"0%"}>
@@ -129,12 +138,17 @@ function OverviewLegend(props) {
             </linearGradient>
         </defs>
         <g transform={`translate(${MARGIN.left}, 0)`}>
-            <rect width={innerWidth} height={10} fill={`url(#legend-${tree.type})`} />
+            <path d={cursorPath(selectedValue)} fill={'red'}/>
+            <text style={{textAnchor:'middle', fontSize:'12px', fill:'red'}} x={xScale(selectedValue)} y={10}>
+                {selectedValue}
+            </text>
+        </g>
+        <g transform={`translate(${MARGIN.left}, 25)`}>
+            <rect width={innerWidth} height={rectHeight} fill={`url(#legend-${tree.type})`} />
             {ticks.map(t => {
-                let xPosition = t / maxValue * innerWidth;
                 return <g key={t}>
-                    <line x1={xPosition} x2={xPosition} y1={0} y2={17} stroke={`black`} />
-                    <text style={{textAnchor:'middle', fontSize:'12px'}} x={xPosition} y={32}>
+                    <line x1={xScale(t)} x2={xScale(t)} y1={0} y2={17} stroke={`black`} />
+                    <text style={{textAnchor:'middle', fontSize:'12px'}} x={xScale(t)} y={32}>
                         {t}
                     </text>
                 </g>
