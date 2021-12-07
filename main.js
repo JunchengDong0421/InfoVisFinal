@@ -5,6 +5,10 @@ const WIDTH = 1000;
 const HEIGHT = 600;
 const MARGIN = {top: 20, right: 40, bottom: 40, left: 40};
 
+const medalCsvPath = "data/Medals.csv";
+const athleteCsvPath = "data/Athletes.csv";
+const mapUrl = "https://unpkg.com/world-atlas@2.0.2/countries-110m.json";
+
 function useData(csvPath) {
     const [dataAll, setData] = React.useState(null);
     React.useEffect(() => {
@@ -24,6 +28,16 @@ function useData(csvPath) {
         });
     }, []);
     return dataAll;
+}
+
+function useMap(jsonPath) {
+  const [data, setData] = React.useState(null);
+  React.useEffect(() => {
+    d3.json(jsonPath).then((topoJsonData) => {
+      setData(topojson.feature(topoJsonData, topoJsonData.objects.countries));
+    });
+  }, []);
+  return data;
 }
 
 function getOverviewTree(data) {
@@ -272,6 +286,7 @@ function CountryDropdown (props) {
 function ViewSwitch(props) {
     const {viewCountry, changeView} = props;
     const layerStyle = {
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-evenly',
@@ -293,14 +308,64 @@ function ViewSwitch(props) {
     </div>
 }
 
+function WorldMap(props) {
+    const {map, color, data, medal, selectedTeam, mouseOver, mouseOut} = props;
+    const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
+    const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
+    const projection = d3.geoEqualEarth().fitSize([innerWidth, innerHeight], map);
+    const path = d3.geoPath(projection);
+    const features = map.features;
+    const alias = {
+        'Taiwan': 'Chinese Taipei',
+        'Czechia': 'Czech Republic',
+        'Dominican Rep.': 'Dominican Republic',
+        'United Kingdom': 'Great Britain',
+        'Iran': 'Islamic Republic of Iran',
+        'Macedonia': 'North Macedonia',
+        'China': 'People\'s Republic of China',
+        'South Korea': 'Republic of Korea',
+        'Moldova': 'Republic of Moldova',
+        'Russia': 'ROC',
+        'Syria': 'Syrian Arab Republic'
+    };
+    return <svg width={WIDTH} height={HEIGHT} >
+        <g transform={`translate(20, 0)`}>
+            <path className={"sphere"} d={path({type: "Sphere"})} fill="lightblue"/>
+            {features.map(f => {
+                let name = f.properties.name;
+                let country = data.filter(d => d.NOC === name)[0];
+                if (!country) {
+                    name = alias[name];
+                    country = data.filter(d => d.NOC === name)[0];
+                }
+                return <path key={f.properties.name + "boundary"} className={"boundary"} d={path(f)}
+                             fill={country?color(country[medal]):"grey"} onMouseOver={() => mouseOver(name)}
+                             stroke={name && (name === selectedTeam)?'black':'none'}
+                             onMouseOut={() => mouseOut()}/>
+            })}
+        </g>
+    </svg>
+}
+
+function MedalTypeSlider(props) {
+    const {medal, mapFilter, setMedal} = props;
+    return <div>
+        <input key="slider" type="range" min="0" max="3" value={mapFilter.indexOf(medal)} step="1"
+                  onChange={e => setMedal(mapFilter[e.target.value])} />
+        <input key="monthText" type="text" value={medal} readOnly />
+    </div>
+}
+
 const TokyoOlympics = () => {
-    const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in maps
-    const [detailCountry, setDetailCountry] = React.useState(null);  // default: overview
+    const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in tree maps
+    const [detailCountry, setDetailCountry] = React.useState(null);  // default: null (overview)
     const [mMaxDisplay, setMMaxDisplay] = React.useState(30);  // default: Top30
     const [aMaxDisplay, setAMaxDisplay] = React.useState(50);  // default: Top50
-    const mData = useData('data/Medals.csv');
-    const aData = useData('data/Athletes.csv');
-    if (!mData || !aData) {
+    const [medalType, setMedalType] = React.useState('Total');  // for slider of world map, default: 'Total'
+    const mData = useData(medalCsvPath);
+    const aData = useData(athleteCsvPath);
+    const map = useMap(mapUrl);
+    if (!mData || !aData || !map) {
         return <pre>loading...</pre>;
     }
     const countryList = Array.from(new Set(aData.map(d => d.NOC))).sort((a, b) => a.localeCompare(b));
@@ -311,23 +376,32 @@ const TokyoOlympics = () => {
         getDetailTree(aData.filter(d => d.NOC === detailCountry));  // sorted by number of athletes
     let mTree = {name: 'root', children: mTreeJson, type: 'medal'};
     let aTree = {name: 'root', children: aTreeJson, type: 'athlete'};
+    const worldMouseOver = n => {setSelectedCountry(n); setDetailCountry(n)};
+    const worldMouseOut =() => {setSelectedCountry(null); setDetailCountry(null)};
     const mouseOver = n => {setSelectedCountry(n)};
     const mouseOut = () => {setSelectedCountry(null)};
+    const mapColor = d3.scaleLinear().domain([0, d3.max(mData, (d) => d[medalType])]).range(["beige", "red"]);
+    const mapFilter = ["Total", "Gold", "Silver", "Bronze"];
     if (!detailCountry) {
         const mColor = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(mTreeJson, d => d.value)]);
         const aColor = d3.scaleSequential(d3.interpolateGreens).domain([0, d3.max(aTreeJson, d => d.value)]);
         return <div>
-            <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
+            {/*World Map*/}
+            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedTeam={selectedCountry}
+                      mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
+            <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
+            {/*Tree Map Control*/}
+            <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry} />
             {/*Medal Tree Map*/}
             <TreeMapTitle text={'Number of Medals by Country'} />
             <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
             <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
-                             mouseOver={mouseOver} mouseOut = {mouseOut}/>
+                             mouseOver={mouseOver} mouseOut = {mouseOut} />
             {/*Athlete Tree Map*/}
             <TreeMapTitle text={'Number of Athletes by Country'} />
             <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
             <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
-                             mouseOver={mouseOver} mouseOut = {mouseOut}/>
+                             mouseOver={mouseOver} mouseOut = {mouseOut} />
         </div>;
     } else {
         const mColor = d3.scaleOrdinal(['gold', 'silver', '#CD7F32']).domain(['Gold', 'Silver', 'Bronze']);
@@ -338,6 +412,11 @@ const TokyoOlympics = () => {
             '#606f15', '#a54509', '#fc8772', '#f097c6', '#d4ccd1', '#606f15', '#739400', '#7d5bf0', '#bbd9fd',
             '#73616f', '#297192', '#3957ff']).domain(disciplineList);
         return <div>
+            {/*World Map*/}
+            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedTeam={selectedCountry}
+                      mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
+            <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
+            {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
             <CountryDropdown options={countryList} selectedValue={detailCountry}
                              onSelectedValueChange={setDetailCountry} />
