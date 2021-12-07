@@ -1,4 +1,5 @@
-console.log('Authors: Juncheng, Mostafa')
+console.log('Authors: Juncheng Dong (jd4115@nyu.edu), Mostafa Helaly (meh626@nyu.edu)' + '\n\n' +
+    'See more details on https://github.com/JunchengDong0421/InfoVisFinal')
 
 const WIDTH = 1000;
 const HEIGHT = 600;
