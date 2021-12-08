@@ -394,7 +394,7 @@ function Tooltip(props) {
 
 const TokyoOlympics = () => {
     const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in tree maps
-    const [detailCountry, setDetailCountry] = React.useState('Albania');  // default: null (overview)
+    const [detailCountry, setDetailCountry] = React.useState(null);  // default: null (overview)
     const [mMaxDisplay, setMMaxDisplay] = React.useState(30);  // default: Top30
     const [aMaxDisplay, setAMaxDisplay] = React.useState(50);  // default: Top50
     const [medalType, setMedalType] = React.useState('Total');  // for slider of world map, default: 'Total'
