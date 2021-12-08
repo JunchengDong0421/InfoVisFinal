@@ -1,9 +1,9 @@
 console.log('Authors: Juncheng Dong (jd4115@nyu.edu), Mostafa Helaly (meh626@nyu.edu)' + '\n\n' +
     'See more details on https://github.com/JunchengDong0421/InfoVisFinal')
 
-const WIDTH = 750;
-const HEIGHT = 450;
-const MARGIN = {top: 10, right: 10, bottom: 10, left: 10};
+const WIDTH = 700;
+const HEIGHT = 400;
+const MARGIN = {top: 10, right: 20, bottom: 10, left: 20};
 
 const medalCsvPath = "data/Medals.csv";
 const athleteCsvPath = "data/Athletes.csv";
@@ -368,6 +368,7 @@ function Tooltip(props) {
     if (!selectedCountry || !detailCountry) {  // if not on hover
         return <div />
     }
+    const [x, y] = mousePosition;
     const style = {
         position: 'absolute',
         textAlign: 'left',
@@ -375,13 +376,13 @@ function Tooltip(props) {
         height: '100px',
         padding: '5px',
         font: '13px sans-serif',
-        background: 'rgb(243, 239, 22)',
+        background: 'rgb(243,140,22)',
         border: 0,
         borderRadius: '8px',
         pointerEvents: 'none',
         whiteSpace: 'pre-wrap',  // enable line escape
-        left: mousePosition[0] + 'px',
-        top: mousePosition[1] + 'px'
+        left: x+170>WIDTH ? x-170 : x + 'px',  // make sure tooltip not to overflow and cover the tree map
+        top: y + 'px'
     }
     const totalCount = t => d3.sum(t, d => d.value);
     const singleCount = t => (mTree.filter(d => d.name === t)[0] || {value: 0}).value;
@@ -393,18 +394,24 @@ function Tooltip(props) {
 }
 
 const TokyoOlympics = () => {
+
+    // set up React state variables
     const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in tree maps
     const [detailCountry, setDetailCountry] = React.useState(null);  // default: null (overview)
     const [mMaxDisplay, setMMaxDisplay] = React.useState(30);  // default: Top30
     const [aMaxDisplay, setAMaxDisplay] = React.useState(50);  // default: Top50
     const [medalType, setMedalType] = React.useState('Total');  // for slider of world map, default: 'Total'
-    const [mousePosition, setMousePosition] = React.useState([-1, -1]);  // [left, top]
+    const [mousePosition, setMousePosition] = React.useState([-1, -1]);  // [X, Y]
+
+    // load data
     const mData = useData(medalCsvPath);
     const aData = useData(athleteCsvPath);
     const map = useMap(mapUrl);
     if (!mData || !aData || !map) {
         return <pre>loading...</pre>;
     }
+
+    // build up tree
     const countryList = Array.from(new Set(aData.map(d => d.NOC))).sort((a, b) => a.localeCompare(b));
     let mTreeJson = !detailCountry ? getOverviewTree(mData).slice(0, mMaxDisplay) :
         getDetailTree(mData.filter(d => d.NOC === detailCountry));  // sorted by number of medals
@@ -412,19 +419,30 @@ const TokyoOlympics = () => {
         getDetailTree(aData.filter(d => d.NOC === detailCountry));  // sorted by number of athletes
     let mTree = {name: 'root', children: mTreeJson, type: 'medal'};
     let aTree = {name: 'root', children: aTreeJson, type: 'athlete'};
+
+    // set hover event handlers for different maps
     const worldMouseOver = (e,n) => {setSelectedCountry(n); setDetailCountry(n);
         setMousePosition([e.pageX, e.pageY])};
     const worldMouseOut = () => {setSelectedCountry(null); setDetailCountry(null);
         setMousePosition([-1, -1])};
     const overviewMouseOver = n => {setSelectedCountry(n)};
     const overviewMouseOut = () => {setSelectedCountry(null)};
+
+    // world map color function and filter list
     const mapColor = d3.scaleLinear().domain([0, d3.max(mData, (d) => d[medalType])]).range(["beige", "red"]);
     const mapFilter = ["Total", "Gold", "Silver", "Bronze"];
-    const globalLayout = {display: 'flex', justifyContent: 'space-around'}
-    const mapLayout = {maxWidth: '50%'}
-    if (!detailCountry) {
+
+    // styles for the primary layout of the visualization
+    const globalLayout = {display: 'flex', justifyContent: 'center'}
+    const mapLayout = {maxWidth: '50%', margin: '10px 20px'}
+
+    // return components based on "Overview" or "Detail View"
+    if (!detailCountry) {  // Overview
+
+        // overview tree map color functions
         const mColor = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(mTreeJson, d => d.value)]);
         const aColor = d3.scaleSequential(d3.interpolateGreens).domain([0, d3.max(aTreeJson, d => d.value)]);
+
         return <div style={globalLayout}>
             <div style={mapLayout}>
                 {/*World Map*/}
@@ -434,7 +452,6 @@ const TokyoOlympics = () => {
                 <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
             </div>
             <div style={mapLayout}>
-
                 {/*Medal Tree Map*/}
                 <MapTitle text={'Number of Medals by Country'} />
                 <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
@@ -452,7 +469,9 @@ const TokyoOlympics = () => {
             <Tooltip mTree={mTreeJson} aTree={aTreeJson} mousePosition={mousePosition}
                      selectedCountry={selectedCountry} detailCountry={detailCountry} />
         </div>;
-    } else {
+    } else {  // Detail View
+
+        // detail tree map color functions
         const mColor = d3.scaleOrdinal(['gold', 'silver', '#CD7F32']).domain(['Gold', 'Silver', 'Bronze']);
         const disciplineList = Array.from(new Set(aData.map(d => d.Discipline))).sort((a, b) => a.localeCompare(b));
         const aColor = d3.scaleOrdinal(['#606f15', '#e9700a', '#977ab4', '#a54509', '#9e8c62', '#3cc4d9', '#d9bf01',
@@ -461,6 +480,7 @@ const TokyoOlympics = () => {
             '#d3fe14', '#bb73a9', '#ccf6e9', '#10b0ff', '#b6a7d4', '#d3fe14', '#c9080a', '#d3fe14', '#fd9b39',
             '#606f15', '#a54509', '#fc8772', '#f097c6', '#d4ccd1', '#606f15', '#739400', '#7d5bf0', '#bbd9fd',
             '#73616f', '#297192', '#3957ff']).domain(disciplineList);
+
         return <div style={globalLayout}>
             <div style={mapLayout}>
                 {/*World Map*/}
