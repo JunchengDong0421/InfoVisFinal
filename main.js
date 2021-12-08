@@ -1,9 +1,9 @@
 console.log('Authors: Juncheng Dong (jd4115@nyu.edu), Mostafa Helaly (meh626@nyu.edu)' + '\n\n' +
     'See more details on https://github.com/JunchengDong0421/InfoVisFinal')
 
-const WIDTH = 1000;
-const HEIGHT = 600;
-const MARGIN = {top: 20, right: 40, bottom: 40, left: 40};
+const WIDTH = 750;
+const HEIGHT = 450;
+const MARGIN = {top: 10, right: 10, bottom: 10, left: 10};
 
 const medalCsvPath = "data/Medals.csv";
 const athleteCsvPath = "data/Athletes.csv";
@@ -105,7 +105,9 @@ function OverviewTreeMap(props) {
     const sameCell = NOC => selectedCountry === NOC;
     const mapLayout = {
         display: 'flex',
-        alignItems: 'center'
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: '20px'
     }
     return <div style={mapLayout}>
         <svg width={WIDTH} height={HEIGHT}>
@@ -176,11 +178,11 @@ function DetailTreeMap(props) {
     const {tree, color} = props;
     const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
-    const legendWidth = 600;  // make sure do not overflow x-axis of screen
+    const legendWidth = 700;  // make sure do not overflow x-axis of screen
     const legendHeight = innerHeight-2*2;  // minus the padding of the tree map
     if (tree.children.length === 0) {
         return <svg width={WIDTH} height={HEIGHT}>
-            <text fontSize={'3em'} x={innerWidth/2-MARGIN.left-MARGIN.right}
+            <text fontSize={'3em'} x={innerWidth/2} style={{textAnchor: 'middle'}}
                   y={innerHeight/2+MARGIN.top+MARGIN.bottom}>No Record</text>
         </svg>
     }
@@ -189,7 +191,9 @@ function DetailTreeMap(props) {
     const leaves = root.leaves();
     const mapLayout = {
         display: 'flex',
-        alignItems: 'center'
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: '20px'
     }
     return <div style={mapLayout}>
         <svg width={WIDTH} height={HEIGHT}>
@@ -211,21 +215,17 @@ function DetailLegend(props) {
     const {width, height, tree, color} = props;
     const flexStyle = {
         width: width,
-        height: height,
+        maxHeight: height,
         display: 'flex',
-        flexDirection: 'column',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        alignItems: 'center',
-        alignContent: 'center',
+        flexWrap: 'wrap'
     }
     const dynamicConfig = n => {
         let padding, config;
-        if (n>=40) {padding = 0; config = {height: 18, r: 5, margin: '3px 0', fontSize: 11};}
-        else if (30<=n && n<40) {padding = 15; config = {height: 20, r: 7, margin: '3px 0', fontSize: 12};}
-        else if (20<=n && n<30) {padding = 30; config = {height: 25, r: 9, margin: '5px 0', fontSize: 13};}
-        else if (10<=n && n<20) {padding = 40; config = {height: 30, r: 10, margin: '5px 0', fontSize: 14};}
-        else {padding = 40; config = {height: 40, r: 11, margin: '6px 0', fontSize: 14};}
+        if (n>=40) {padding = 0; config = {width: 170, height: 18, r: 5, margin: '3px 0', fontSize: 11};}
+        else if (30<=n && n<40) {padding = 15; config = {width: 170, height: 20, r: 7, margin: '3px 0', fontSize: 13};}
+        else if (20<=n && n<30) {padding = 30; config = {width: 200, height: 25, r: 9, margin: '5px 0', fontSize: 14};}
+        else if (10<=n && n<20) {padding = 40; config = {width: 200, height: 30, r: 10, margin: '5px 0', fontSize: 15};}
+        else {padding = 40; config = {width: 200, height: 40, r: 11, margin: '6px 0', fontSize: 16};}
         flexStyle.height -= padding;
         return config;
     };
@@ -233,8 +233,8 @@ function DetailLegend(props) {
     return <div style={flexStyle}>
         {tree.children.map(d => {
             let cx = config.r, cy = config.r, fontSize = config.fontSize;
-            return <svg key={d.name} width={width/2-MARGIN.right} height={config.height}
-                        transform={`translate(10, 0)`} style={{margin: config.margin}}>
+            return <svg key={d.name} width={config.width} height={config.height}
+                        transform={`translate(25, 0)`} style={{margin: config.margin}}>
                 <g>
                     <circle fill={color(d.name)} r={config.r} cx={cx} cy={cy} />
                     <text style={{textAnchor: 'start', fontSize: config.fontSize + 'px', fontFamily: 'Trebuchet MS'}}
@@ -247,7 +247,7 @@ function DetailLegend(props) {
     </div>
 }
 
-function TreeMapTitle(props) {  // mainly for styling
+function MapTitle(props) {  // mainly for styling
     const {text} = props;
     const titleStyle = {
         width: WIDTH,
@@ -289,19 +289,21 @@ function CountryDropdown (props) {
 function ViewSwitch(props) {
     const {viewCountry, changeView} = props;
     const layerStyle = {
-        width: '100%',
+        position: 'fixed',
+        bottom: '10px',
+        left: '0',
+        width: WIDTH,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-evenly',
-        margin: '20px'
+        justifyContent: 'center'
     };
     const buttonStyle = disabled => {
         return {
             fontFamily: 'Georgia,sans-serif',
-            fontSize: '1.2em',
-            width: '160px',
+            fontSize: '1.1em',
+            width: '120px',
             height: '40px',
             borderRadius: '10px',
+            margin: '0 30px',
             cursor: disabled ? 'no-drop' : 'pointer'
         };
     };
@@ -332,7 +334,7 @@ function WorldMap(props) {
         'Syria': 'Syrian Arab Republic'
     };
     return <svg width={WIDTH} height={HEIGHT} >
-        <g transform={`translate(20, 0)`}>
+        <g transform={`translate(10, 0)`}>
             <path className={"sphere"} d={path({type: "Sphere"})} fill="lightblue"/>
             {features.map(f => {
                 let name = f.properties.name;
@@ -392,7 +394,7 @@ function Tooltip(props) {
 
 const TokyoOlympics = () => {
     const [selectedCountry, setSelectedCountry] = React.useState(null);  // selected country in tree maps
-    const [detailCountry, setDetailCountry] = React.useState(null);  // default: null (overview)
+    const [detailCountry, setDetailCountry] = React.useState('Albania');  // default: null (overview)
     const [mMaxDisplay, setMMaxDisplay] = React.useState(30);  // default: Top30
     const [aMaxDisplay, setAMaxDisplay] = React.useState(50);  // default: Top50
     const [medalType, setMedalType] = React.useState('Total');  // for slider of world map, default: 'Total'
@@ -418,26 +420,35 @@ const TokyoOlympics = () => {
     const overviewMouseOut = () => {setSelectedCountry(null)};
     const mapColor = d3.scaleLinear().domain([0, d3.max(mData, (d) => d[medalType])]).range(["beige", "red"]);
     const mapFilter = ["Total", "Gold", "Silver", "Bronze"];
+    const globalLayout = {display: 'flex', justifyContent: 'space-around'}
+    const mapLayout = {maxWidth: '50%'}
     if (!detailCountry) {
         const mColor = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(mTreeJson, d => d.value)]);
         const aColor = d3.scaleSequential(d3.interpolateGreens).domain([0, d3.max(aTreeJson, d => d.value)]);
-        return <div>
-            {/*World Map*/}
-            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
-                      detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
-            <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
+        return <div style={globalLayout}>
+            <div style={mapLayout}>
+                {/*World Map*/}
+                <MapTitle text={'World Map'} />
+                <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
+                          detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
+                <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
+            </div>
+            <div style={mapLayout}>
+
+                {/*Medal Tree Map*/}
+                <MapTitle text={'Number of Medals by Country'} />
+                <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
+                <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
+                                 mouseOver={overviewMouseOver} mouseOut = {overviewMouseOut} />
+                {/*Athlete Tree Map*/}
+                <MapTitle text={'Number of Athletes by Country'} />
+                <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
+                <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
+                                 mouseOver={overviewMouseOver} mouseOut = {overviewMouseOut} />
+            </div>
             {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry} />
-            {/*Medal Tree Map*/}
-            <TreeMapTitle text={'Number of Medals by Country'} />
-            <DisplaySlider maxValue={mData.length} maxDisplay={mMaxDisplay} setMaxDisplay={setMMaxDisplay} />
-            <OverviewTreeMap tree={mTree} color={mColor} selectedCountry={selectedCountry}
-                             mouseOver={overviewMouseOver} mouseOut = {overviewMouseOut} />
-            {/*Athlete Tree Map*/}
-            <TreeMapTitle text={'Number of Athletes by Country'} />
-            <DisplaySlider maxValue={countryList.length} maxDisplay={aMaxDisplay} setMaxDisplay={setAMaxDisplay} />
-            <OverviewTreeMap tree={aTree} color={aColor} selectedCountry={selectedCountry}
-                             mouseOver={overviewMouseOver} mouseOut = {overviewMouseOut} />
+            {/*Tooltip*/}
             <Tooltip mTree={mTreeJson} aTree={aTreeJson} mousePosition={mousePosition}
                      selectedCountry={selectedCountry} detailCountry={detailCountry} />
         </div>;
@@ -450,21 +461,27 @@ const TokyoOlympics = () => {
             '#d3fe14', '#bb73a9', '#ccf6e9', '#10b0ff', '#b6a7d4', '#d3fe14', '#c9080a', '#d3fe14', '#fd9b39',
             '#606f15', '#a54509', '#fc8772', '#f097c6', '#d4ccd1', '#606f15', '#739400', '#7d5bf0', '#bbd9fd',
             '#73616f', '#297192', '#3957ff']).domain(disciplineList);
-        return <div>
-            {/*World Map*/}
-            <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
-                      detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
-            <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
+        return <div style={globalLayout}>
+            <div style={mapLayout}>
+                {/*World Map*/}
+                <MapTitle text={'World Map'} />
+                <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
+                          detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
+                <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
+            </div>
+            <div style={mapLayout}>
+                <CountryDropdown options={countryList} selectedValue={detailCountry} selectedCountry={selectedCountry}
+                                 onSelectedValueChange={setDetailCountry} />
+                {/*Medal Tree Map*/}
+                <MapTitle text={`Total Medals: ${!mTreeJson ? 0 : d3.sum(mTreeJson, d => d.value)}`} />
+                <DetailTreeMap tree={mTree} color={mColor} />
+                {/*Athlete Tree Map*/}
+                <MapTitle text={`Total Athletes: ${d3.sum(aTreeJson, d => d.value)}`} />
+                <DetailTreeMap tree={aTree} color={aColor} />
+            </div>
             {/*Tree Map Control*/}
             <ViewSwitch viewCountry={detailCountry} changeView={setDetailCountry}/>
-            <CountryDropdown options={countryList} selectedValue={detailCountry} selectedCountry={selectedCountry}
-                             onSelectedValueChange={setDetailCountry} />
-            {/*Medal Tree Map*/}
-            <TreeMapTitle text={`Total Medals: ${!mTreeJson ? 0 : d3.sum(mTreeJson, d => d.value)}`} />
-            <DetailTreeMap tree={mTree} color={mColor} />
-            {/*Athlete Tree Map*/}
-            <TreeMapTitle text={`Total Athletes: ${d3.sum(aTreeJson, d => d.value)}`} />
-            <DetailTreeMap tree={aTree} color={aColor} />
+            {/*Tooltip*/}
             <Tooltip mTree={mTreeJson} aTree={aTreeJson} mousePosition={mousePosition}
                      selectedCountry={selectedCountry} detailCountry={detailCountry} />
         </div>;
