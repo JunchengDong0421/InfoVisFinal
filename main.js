@@ -215,6 +215,7 @@ function DetailLegend(props) {
     const {width, height, tree, color} = props;
     const flexStyle = {
         width: width,
+        height: 0,  // useless value, used to avoid warning in console
         maxHeight: height,
         display: 'flex',
         flexWrap: 'wrap'
