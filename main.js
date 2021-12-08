@@ -446,7 +446,7 @@ const TokyoOlympics = () => {
         return <div style={globalLayout}>
             <div style={mapLayout}>
                 {/*World Map*/}
-                <MapTitle text={'World Map'} />
+                <MapTitle text={'Medals World Map'} />
                 <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
                           detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
                 <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
@@ -484,7 +484,7 @@ const TokyoOlympics = () => {
         return <div style={globalLayout}>
             <div style={mapLayout}>
                 {/*World Map*/}
-                <MapTitle text={'World Map'} />
+                <MapTitle text={'Medals World Map'} />
                 <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
                           detailCountry = {detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut} />
                 <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType} />
