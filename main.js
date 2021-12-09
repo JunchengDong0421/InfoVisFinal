@@ -154,6 +154,7 @@ function OverviewLegend(props) {
         if (v) return `M ${xScale(v) - 5} 15 L ${xScale(v) + 5} 15 L ${xScale(v)} 23 Z`;
     }
     return <svg width={width} height={height}>
+        {/*Color Gradients*/}
         <defs>
             <linearGradient id={`legend-${tree.type}`} x1={"0%"} y1={"0%"} x2={"100%"} y2={"0%"}>
                 {colors.map((d, idx) => {
@@ -161,12 +162,14 @@ function OverviewLegend(props) {
                 })}
             </linearGradient>
         </defs>
+        {/*Cursor*/}
         <g transform={`translate(${MARGIN.left}, 0)`}>
             <path d={cursorPath(selectedValue)} fill={'red'}/>
             <text style={{textAnchor: 'middle', fontSize: '12px', fill: 'red'}} x={xScale(selectedValue)} y={10}>
                 {selectedValue}
             </text>
         </g>
+        {/*Bar*/}
         <g transform={`translate(${MARGIN.left}, 25)`}>
             <rect width={innerWidth} height={rectHeight} fill={`url(#legend-${tree.type})`}/>
             {ticks.map(t => {
@@ -380,10 +383,14 @@ function WorldMap(props) {
 
 function MedalTypeSlider(props) {
     const {medal, mapFilter, setMedal} = props;
-    return <div>
-        <input key="slider" type="range" min="0" max="3" value={mapFilter.indexOf(medal)} step="1"
-               onChange={e => setMedal(mapFilter[e.target.value])}/>
-        <input key="monthText" type="text" value={medal} readOnly/>
+    return <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+        {mapFilter.map(t => {
+            return <div style={{width: 100, height: 20, display: 'flex', alignItems: 'center', margin: 10}}>
+                <input style={{margin: 0}} key={t} type="radio" name="medal" value={t} checked={medal === t}
+                       onChange={e => setMedal(e.target.value)}/>
+                <span style={{marginLeft: '10px'}}>{t}</span>
+            </div>
+        })}
     </div>
 }
 
@@ -464,6 +471,7 @@ const TokyoOlympics = () => {
 
     // world map color function and filter list
     const mapColor = d3.scaleLinear().domain([0, d3.max(mData, (d) => d[medalType])]).range(["beige", "red"]);
+    // non-uniform transform: d3.scaleSequentialQuantile(d3.interpolateReds).domain(mData.map(d=>d[medalType]))
     const mapFilter = ["Total", "Gold", "Silver", "Bronze"];
 
     // styles for the primary layout of the visualization
