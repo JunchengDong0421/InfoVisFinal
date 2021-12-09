@@ -47,10 +47,11 @@ function getOverviewTree(data) {
             return {name: d.NOC, value: d.Total};
         });
     } else {  // athlete tree
-        const groupedData = d3.groups(data, d => d.NOC);
+        const groupedData = d3.groups(data, d => d.NOC);  // d3.groups returns a nested Array instead of a Map
         return groupedData.map(d => {
             return {name: d[0], value: d[1].length};
         }).sort((a, b) => b.value - a.value);
+        /* If using d3.group: Array.from(d3.group(data, d => d.NOC), ([k, v]) => ({name: k, value: v.length})) */
     }
 }
 
@@ -68,10 +69,11 @@ function getDetailTree(data) {
         })
         return tree;
     } else {  // athlete tree
-        const groupedData = d3.groups(data, d => d.Discipline);
+        const groupedData = d3.groups(data, d => d.Discipline);  // d3.groups returns a nested Array instead of a Map
         return groupedData.map(d => {
             return {name: d[0], value: d[1].length};
         }).sort((a, b) => b.value - a.value);
+        /* If using d3.group: Array.from(d3.group(data, d => d.Discipline), ([k, v]) => ({name: k, value: v.length})) */
     }
 }
 
