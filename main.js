@@ -381,11 +381,11 @@ function WorldMap(props) {
     </svg>
 }
 
-function MedalTypeSlider(props) {
+function MedalTypeFilter(props) {
     const {medal, mapFilter, setMedal} = props;
     return <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         {mapFilter.map(t => {
-            return <div style={{width: 100, height: 20, display: 'flex', alignItems: 'center', margin: 10}}>
+            return <div id={t} style={{width: 100, height: 20, display: 'flex', alignItems: 'center', margin: 10}}>
                 <input style={{margin: 0}} key={t} type="radio" name="medal" value={t} checked={medal === t}
                        onChange={e => setMedal(e.target.value)}/>
                 <span style={{marginLeft: '10px'}}>{t}</span>
@@ -491,7 +491,7 @@ const TokyoOlympics = () => {
                 <MapTitle text={'Medals World Map'}/>
                 <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
                           detailCountry={detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut}/>
-                <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType}/>
+                <MedalTypeFilter medal={medalType} mapFilter={mapFilter} setMedal={setMedalType}/>
             </div>
             <div style={mapLayout}>
                 {/*Medal Tree Map*/}
@@ -529,7 +529,7 @@ const TokyoOlympics = () => {
                 <MapTitle text={'Medals World Map'}/>
                 <WorldMap map={map} color={mapColor} data={mData} medal={medalType} selectedCountry={selectedCountry}
                           detailCountry={detailCountry} mouseOver={worldMouseOver} mouseOut={worldMouseOut}/>
-                <MedalTypeSlider medal={medalType} mapFilter={mapFilter} setMedal={setMedalType}/>
+                <MedalTypeFilter medal={medalType} mapFilter={mapFilter} setMedal={setMedalType}/>
             </div>
             <div style={mapLayout}>
                 <CountryDropdown options={countryList} selectedValue={detailCountry} selectedCountry={selectedCountry}
