@@ -1,7 +1,6 @@
 # InfoVisFinal
 
 ## Code Explanations
-***
 -&nbsp;When `selectedCountry` and `detailCountry` both are NOT `null`, the user is hovering on the world map;  
 When `selectedCountry` is NOT `null` but `detailCountry` is `null`, the user is on the "Overview" page (and is not 
 hovering on the world map);  
@@ -11,6 +10,5 @@ hovering on the world map).
 work well when number of countries is small.
 
 ## Archived
-***
 - `map.js`: old code of world map.
 - `names.js`: shows country name discrepancies in map data and Olympics data
