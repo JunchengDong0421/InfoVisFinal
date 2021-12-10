@@ -373,7 +373,7 @@ function WorldMap(props) {
                 }
                 name = alias || name;  // make sure name is same as NOC in 'Athletes.csv'
                 return <path key={f.properties.name + "boundary"} className={"boundary"} d={path(f)}
-                             fill={country ? color(country[medal]) : "grey"} onMouseOver={e => mouseOver(e, name)}
+                             fill={color(country ? country[medal] : 0)} onMouseOver={e => mouseOver(e, name)}
                              stroke={name === (selectedCountry || detailCountry) ? 'black' : 'none'}
                              onMouseOut={() => mouseOut()}/>
             })}
